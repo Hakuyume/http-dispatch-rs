@@ -10,6 +10,7 @@ pub use convert::{Json, TypedHeader};
 pub use error::Error;
 pub use headers;
 pub use http;
+pub use http_body;
 use http_body::combinators::UnsyncBoxBody;
 use tower::BoxError;
 
