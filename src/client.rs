@@ -1,4 +1,5 @@
-use crate::{BoxBody, Error, FromResponse, IntoRequest};
+use crate::convert::{FromResponse, IntoRequest};
+use crate::{BoxBody, Error};
 use bytes::Bytes;
 use futures::future::{BoxFuture, Either};
 use futures::{FutureExt, TryFutureExt};

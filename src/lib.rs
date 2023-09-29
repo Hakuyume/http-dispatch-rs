@@ -6,7 +6,6 @@ mod tests;
 
 use bytes::Bytes;
 pub use client::Client;
-use convert::{FromResponse, IntoRequest};
 pub use convert::{Json, TypedHeader};
 pub use error::Error;
 pub use headers;
