@@ -89,21 +89,23 @@ macro_rules! impl_tuple {
 
         impl<$t, $($ts),*> FromResponse for ($t, $($ts),*)
         where
-            ($t, ($($ts),*)): FromResponse + 'static,
+            Self: 'static,
+            ($t, ($($ts),*)): FromResponse,
         {
             fn from_response(response: Response<BoxBody>) -> BoxFuture<'static, Result<Self, Error>> {
                 #[allow(non_snake_case)]
-                <($t, ($($ts),*))>::from_response(response).map_ok(|($t, ($($ts),*))| ($t, $($ts),*)).boxed()
+                FromResponse::from_response(response).map_ok(|($t, ($($ts),*))| ($t, $($ts),*)).boxed()
             }
         }
 
         impl<$t, $($ts),*> FromResponseParts for ($t, $($ts),*)
         where
-            ($t, ($($ts),*)): FromResponseParts + 'static,
+            Self: 'static,
+            ($t, ($($ts),*)): FromResponseParts,
         {
             fn from_response_parts(parts: &mut response::Parts) -> BoxFuture<'_, Result<Self, Error>> {
                 #[allow(non_snake_case)]
-                <($t, ($($ts),*))>::from_response_parts(parts).map_ok(|($t, ($($ts),*))| ($t, $($ts),*)).boxed()
+                FromResponseParts::from_response_parts(parts).map_ok(|($t, ($($ts),*))| ($t, $($ts),*)).boxed()
             }
         }
     };
