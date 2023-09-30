@@ -6,23 +6,55 @@ use futures::{FutureExt, TryFutureExt};
 use http::{Request, Response, StatusCode};
 use http_body::Body;
 use std::future;
-use tower::util::BoxCloneService;
 use tower::{BoxError, Service, ServiceExt};
 
-#[derive(Clone)]
-pub struct Client(BoxCloneService<Request<BoxBody>, Response<BoxBody>, BoxError>);
+trait CloneService<R>: Service<R> {
+    fn clone_box(
+        &self,
+    ) -> Box<
+        dyn CloneService<R, Response = Self::Response, Error = Self::Error, Future = Self::Future>
+            + Send
+            + Sync,
+    >;
+}
+impl<R, T> CloneService<R> for T
+where
+    T: Clone + Service<R> + Send + Sync + 'static,
+{
+    fn clone_box(
+        &self,
+    ) -> Box<
+        dyn CloneService<R, Response = Self::Response, Error = Self::Error, Future = Self::Future>
+            + Send
+            + Sync,
+    > {
+        Box::new(self.clone())
+    }
+}
+
+pub struct Client(
+    Box<
+        dyn CloneService<
+                Request<BoxBody>,
+                Response = Response<BoxBody>,
+                Error = BoxError,
+                Future = BoxFuture<'static, Result<Response<BoxBody>, BoxError>>,
+            > + Send
+            + Sync,
+    >,
+);
 
 impl Client {
     pub fn new<S, T, U>(service: S) -> Self
     where
-        S: Clone + Service<Request<T>, Response = Response<U>> + Send + 'static,
+        S: Clone + Service<Request<T>, Response = Response<U>> + Send + Sync + 'static,
         BoxError: From<S::Error>,
         S::Future: Send,
         T: From<BoxBody> + 'static,
         U: Body<Data = Bytes> + Send + 'static,
         BoxError: From<U::Error>,
     {
-        Self(BoxCloneService::new(
+        Self(Box::new(
             service
                 .map_request(|request: Request<BoxBody>| {
                     let (parts, body) = request.into_parts();
@@ -32,7 +64,8 @@ impl Client {
                     let (parts, body) = response.into_parts();
                     Response::from_parts(parts, body.map_err(BoxError::from).boxed_unsync())
                 })
-                .map_err(BoxError::from),
+                .map_err(BoxError::from)
+                .map_future(FutureExt::boxed),
         ))
     }
 
@@ -41,7 +74,7 @@ impl Client {
         T: IntoRequest,
         U: FromResponse + 'static,
     {
-        let service = self.0.clone();
+        let service = self.0.clone_box();
         future::ready(request.into_request())
             .and_then(move |request| service.oneshot(request).map_err(Error::Service))
             .and_then(|response| {
