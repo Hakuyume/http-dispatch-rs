@@ -44,6 +44,12 @@ pub struct Client(
     >,
 );
 
+impl Clone for Client {
+    fn clone(&self) -> Self {
+        Self(self.0.clone_box())
+    }
+}
+
 impl Client {
     pub fn new<S, T, U>(service: S) -> Self
     where
