@@ -60,4 +60,18 @@ impl Client {
             })
             .boxed()
     }
+
+    #[cfg(feature = "hyper")]
+    pub fn hyper() -> Self {
+        Self::new(
+            hyper::Client::builder().build::<_, BoxBody>(
+                hyper_rustls::HttpsConnectorBuilder::new()
+                    .with_webpki_roots()
+                    .https_or_http()
+                    .enable_http1()
+                    .enable_http2()
+                    .build(),
+            ),
+        )
+    }
 }

@@ -1,18 +1,10 @@
-use super::{BoxBody, Client, Error, Json, TypedHeader};
+use super::{Client, Error, Json, TypedHeader};
 use headers::UserAgent;
 use http::{Method, StatusCode, Uri};
 use serde::Deserialize;
 
 fn client() -> Client {
-    Client::new(
-        hyper::Client::builder().build::<_, BoxBody>(
-            hyper_rustls::HttpsConnectorBuilder::new()
-                .with_webpki_roots()
-                .https_only()
-                .enable_http2()
-                .build(),
-        ),
-    )
+    Client::hyper()
 }
 
 // https://docs.github.com/en/free-pro-team@latest/rest/meta/meta?apiVersion=2022-11-28#get-github-meta-information

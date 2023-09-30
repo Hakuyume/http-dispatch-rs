@@ -1,7 +1,7 @@
 mod client;
 mod convert;
 mod error;
-#[cfg(test)]
+#[cfg(all(test, feature = "hyper"))]
 mod tests;
 
 use bytes::Bytes;
